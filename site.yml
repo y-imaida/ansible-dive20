@@ -1,0 +1,100 @@
+---
+- hosts: target_for_ec2-user
+  become: true
+  roles:
+    - {role: amazon-linux, tasks: ['update-packages',
+                                  'set-timezone',
+                                  'set-locale',
+                                  'make-swap',
+                                  'add-users',
+                                  'grant-sudo-priv',
+                                  'register-ssh-key']}
+
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: restart EC2 instance
+      ec2:
+        instance_tags:
+          Name: "{{ ec2_name }}"
+        state: restarted
+
+    - name: wait for 60 seconds
+      wait_for:
+        timeout: 60
+
+- hosts: target_for_ec2-user
+  become: true
+  tasks:
+    - name: restart crond
+      service:
+        name: crond
+        state: restarted
+
+- hosts: target_for_app
+  become: true
+  roles:
+    - {role: amazon-linux, tasks: ['delete-users']}
+    - {role: ruby}
+    - {role: postgresql}
+    - {role: nginx, tasks: ['install-nginx',
+                            'set-service-state']}
+
+- hosts: localhost
+  connection: local
+  roles:
+    - {role: s3}
+
+- hosts: target_for_app
+  become: true
+  roles:
+    - {role: amazon-linux, tasks: ['generate-ssh-key']}
+    - {role: github}
+    - {role: rails-app, tasks: ['create-app-dir']}
+    - {role: nginx, tasks: ['add-rails-app-config']}
+
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: rails app deploy check
+      shell: bundle exec cap production deploy:check
+      args:
+        chdir: "{{ rails_app_local_repo }}"
+      ignore_errors: True
+
+- hosts: localhost
+  connection: local
+  roles:
+    - {role: rails-app, tasks: ['get-secret-key-base',
+                                'create-secret-key-base-file']}
+
+- hosts: target_for_app
+  tasks:
+    - name: get secret key base
+      local_action:
+        module: shell bundle exec rake secret chdir="{{rails_app_local_repo}}"
+      register: secret_key_base
+  roles:
+    - {role: rails-app, secret_key_base: secret_key_base.stdout}}", tasks: ['set-secret-key-base', 'create-dotenv-file']}
+
+- hosts: localhost
+  connection: local
+  roles:
+    - {role: rails-app, tasks: ['get-secret-key-base']}
+
+- hosts: target_for_app
+  roles:
+    - {role: rails-app, tasks: ['set-secret-key-base',
+                                'create-dotenv-file']}
+
+- hosts: localhost
+  connection: local
+  tasks:
+    - name: deploy rails app
+      shell: bundle exec cap production deploy
+      args:
+        chdir: "{{ rails_app_local_repo }}"
+
+- hosts: target_for_app
+  roles:
+    - {role: rails-app, tasks: ['move-images-for-error-page']}

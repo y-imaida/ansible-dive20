@@ -1,0 +1,49 @@
+---
+# tasks file for rails-app
+- name: create app directory
+  file:
+    path: /var/www
+    state: directory
+    owner: app
+    group: app
+  tags: create-app-directory
+  when: "'create-app-dir' in tasks"
+
+- name: get secret key base
+  shell: bundle exec rake secret
+  args:
+    chdir: "{{ rails_app_local_repo }}"
+  register: secret_key_base
+  tags: get-secret-key-base
+  when: "'get-secret-key-base' in tasks"
+
+- name: create secret key base file
+  lineinfile:
+    path: "{{playbook_dir}}/roles/rails-app/files/var/www/rails_app/shared/config/secrets.yml"
+    regexp: 'secret_key_base: '
+    line: '    secret_key_base: {{secret_key_base.stdout}}'
+  when: "'create-secret-key-base-file' in tasks"
+
+- name: set secret key base
+  copy:
+    src: files/var/www/rails_app/shared/config/secrets.yml
+    dest: /var/www/{{ rails_app }}/shared/config/secrets.yml
+  tags: set-secret-key-base
+  when: "'set-secret-key-base' in tasks"
+
+- name: create dotenv file
+  template:
+    src: templates/var/www/rails_app/shared/.env
+    dest: /var/www/{{ rails_app }}/shared/.env
+  tags: create dotenv file
+  when: "'create-dotenv-file' in tasks"
+
+- name: move images for error page
+  command: mv current/public/{{item}} shared/public/assets
+  args:
+    chdir: /var/www/{{rails_app}}
+    creates: /var/www/{{rails_app}}/shared/public/assets/{{item}}
+  with_items:
+    - 404.png
+    - 500.png
+  when: "'move-images-for-error-page' in tasks"

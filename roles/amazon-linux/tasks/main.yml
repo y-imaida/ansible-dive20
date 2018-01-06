@@ -1,0 +1,68 @@
+---
+- name: update all packages
+  yum:
+    name: '*'
+    state: latest
+  tags: update-packages
+  when: "'update-packages' in tasks"
+
+- name: set timezone to Asia/Tokyo
+  timezone:
+    name: Asia/Tokyo
+  tags: set-timezone
+  when: "'set-timezone' in tasks"
+
+- name: set locale to ja_JP.UTF-8
+  block:
+    - lineinfile: path=/etc/sysconfig/i18n regexp='^LANG=' line='LANG="ja_JP.UTF-8"' backup=yes
+    - set_fact: colon=':'
+    - lineinfile: path=/etc/cloud/cloud.cfg regexp='^repo_upgrade:' line='repo_upgrade{{colon}} none' backup=yes
+  tags: set-locale
+  when: "'set-locale' in tasks"
+
+- name: make swap and activate it
+  script: files/scripts/make_swap.sh creates=/swapfile
+  tags: make-swap
+  when: "'make-swap' in tasks"
+
+- name: add users
+  user:
+    name: app
+    groups: wheel
+    append: yes
+  tags: add-users
+  when: "'add-users' in tasks"
+
+- name: generate ssh key file for users
+  user:
+    name: app
+    generate_ssh_key: yes
+  tags: generate-ssh-key
+  when: "'generate-ssh-key' in tasks"
+
+- name: grant sudo priviledge to wheel group
+  lineinfile:
+    path: /etc/sudoers
+    regexp: '^# %wheel..*NOPASSWD: ALL'
+    line: "%wheel\tALL=(ALL)\tNOPASSWD: ALL"
+    backrefs: yes
+    backup: yes
+  tags: grant-sudo-priv
+  when: "'grant-sudo-priv' in tasks"
+
+- name: register the ssh public key for users
+  authorized_key:
+    user: app
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+  tags: register-ssh-key
+  when: "'register-ssh-key' in tasks"
+
+- name: delete users
+  user:
+    name: ec2-user
+    state: absent
+    remove: yes
+    force: yes
+  tags: delete-users
+  when: "'delete-users' in tasks"

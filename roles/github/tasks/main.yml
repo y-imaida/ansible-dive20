@@ -1,0 +1,12 @@
+---
+- name: get ssh public key
+  shell: cat /home/app/.ssh/id_rsa.pub
+  register: ssh_public_key
+  tags: get-ssh-public-key
+
+- name: authorize key with GitHub
+  github_key:
+    name: "{{ github_access_key }}"
+    token: "{{ github_access_token }}"
+    pubkey: "{{ ssh_public_key.stdout }}"
+  tags: authorize-key

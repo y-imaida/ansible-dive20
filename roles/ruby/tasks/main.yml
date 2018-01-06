@@ -1,0 +1,83 @@
+---
+- name: install git
+  yum:
+    name: git
+    state: latest
+  tags: install-git
+
+- name: install rbenv
+  git:
+    repo: 'https://github.com/rbenv/rbenv.git'
+    dest: /usr/local/rbenv
+  tags: install-rbenv
+
+- name: set rbenv profile
+  copy:
+    src: files/etc/profile.d/rbenv.sh
+    dest: /etc/profile.d/rbenv.sh
+    backup: yes
+  tags: set-rbenv-profile
+
+- name: install ruby-build
+  git:
+    repo: 'https://github.com/rbenv/ruby-build.git'
+    dest: /usr/local/rbenv/plugins/ruby-build
+  tags: install-ruby-build
+
+- name: install Development Tools group
+  yum:
+    name: "@Development tools"
+    state: present
+  tags: install-development-tools
+
+- name: install required libraries
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - gcc-c++
+    - glibc-headers
+    - openssl-devel
+    - readline
+    - readline-devel
+    - libyaml-devel
+    - zlib
+    - zlib-devel
+    - libffi-devel
+    - libxml2
+    - libxml2-devel
+    - libxslt
+    - libxslt-devel
+    - mysql-devel
+  tags: install-libs
+
+- name: install ImageMagick
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - ImageMagick
+    - ImageMagick-devel
+  tags: install-ImageMagick
+
+- name: confirm that ruby is installed
+  shell: source /etc/profile.d/rbenv.sh; rbenv versions
+  register: confirm_ruby_result
+  ignore_errors: True
+  tags: confirm-ruby
+
+- name: install ruby
+  block:
+    - shell: source /etc/profile.d/rbenv.sh; rbenv install 2.3.0
+    - shell: source /etc/profile.d/rbenv.sh; rbenv global 2.3.0
+    - shell: source /etc/profile.d/rbenv.sh; rbenv rehash
+  tags: install-ruby
+  when: not '* 2.3.0 (set by /usr/local/rbenv/version)' in confirm_ruby_result.stdout_lines
+
+- name: install bundler
+  gem:
+    name: bundler
+    state: latest
+    executable: /usr/local/rbenv/shims/gem
+    user_install: no
+  tags: install-bundler

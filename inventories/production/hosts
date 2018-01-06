@@ -1,0 +1,32 @@
+all:
+  hosts:
+    target_for_ec2-user:
+      ansible_ssh_user: ec2-user
+      ansible_ssh_private_key_file: ~/.ssh/achieve-key.pem
+    target_for_app:
+      ansible_ssh_user: app
+      ansible_ssh_private_key_file: ~/.ssh/id_rsa
+      psql_role: achieve
+      psql_db: achieve_production
+      github_access_token: <your github access token>
+      github_access_key: <your github access key>
+      rails_app: achieve
+      facebook_id: <your facebook id>
+      facebook_secret: <your facebook secret>
+      pusher_app_id: <your pusher app id>
+      pusher_key: <your pusher key>
+      pusher_secret: <your pusher secret>
+      sendgrid_password: <your sendgrid password>
+      sendgrid_username: <your sendgrid username>
+      twitter_id: <your twitter id>
+      twitter_secret: <your twitter secret>
+      aws_access_key_id: <your aws access key id>
+      aws_secret_access_key: <your secret access key>
+    localhost:
+      ansible_python_interpreter: /usr/local/opt/python/bin/python2
+      s3_bucket: <your s3 bucket>
+  vars:
+    ansible_host: <your target host>
+    ansible_ssh_port: 22
+    ec2_name: <your target ec2 instance name>
+    rails_app_local_repo: <your rails application local repository path>

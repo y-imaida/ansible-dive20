@@ -1,0 +1,8 @@
+---
+# vars file for ec2
+ec2_instance_type: t2.micro
+ec2_key_name: <your ec2 key name>
+ec2_group: <your ec2 security group>
+ec2_group_desc: <your ec2 security group description>
+ec2_name: <your ec2 instance name>
+ec2_eip: <your elastic ip address>

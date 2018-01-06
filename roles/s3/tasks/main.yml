@@ -1,0 +1,5 @@
+---
+- name: create S3 bucket
+  s3_bucket:
+    name: "{{ s3_bucket }}"
+  tags: create-bucket
