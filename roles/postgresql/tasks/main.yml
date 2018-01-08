@@ -28,19 +28,25 @@
 - name: change postgresql config
   block:
     - lineinfile: path=/var/lib/pgsql94/data/postgresql.conf state=present insertafter='^#listen_addresses =' line="listen_addresses = '*'" owner=postgres group=postgres mode=0600 backup=yes
-      notify: restart postgresql94
+      # notify: restart postgresql94
     - copy: src=files/var/lib/pgsql94/data/pg_hba.conf dest=/var/lib/pgsql94/data/pg_hba.conf owner=postgres group=postgres mode=0600 backup=yes
-      notify: restart postgresql94
+      # notify: restart postgresql94
   tags: change-psql-config
+
+- name: restart postgresql94
+  service:
+    name: postgresql94
+    state: restarted
+  tags: restart-psql
 
 - name: create roles
   postgresql_user:
     name: "{{ psql_role }}"
     role_attr_flags: SUPERUSER,LOGIN
-  notify: restart postgresql94
+  # notify: restart postgresql94
   tags: create-roles
 
 - name: create databases
   postgresql_db:
     name: "{{ psql_db }}"
-  notify: restart postgresql94
+  # notify: restart postgresql94
