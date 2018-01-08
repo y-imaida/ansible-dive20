@@ -99,6 +99,8 @@ ok: [localhost] => {
 ＜・・・省略・・・＞
 ```
 
+---
+
 ### EC2インスタンスの環境構築とRailsアプリケーションのデプロイ
 
 #### 事前準備
@@ -118,7 +120,7 @@ all:
       ansible_ssh_private_key_file: ~/.ssh/id_rsa
       psql_role: achieve
       psql_db: achieve_production
-      github_access_token: <your github access token>  ←GitHub接続用の公開鍵を登録するために必要なトークン取得方法は下記参照（※）
+      github_access_token: <your github access token>  ←GitHub接続用の公開鍵を登録するために必要なトークン。取得方法は下記参照（※）
       github_access_key: <your github access key>  ←GitHub接続用の公開鍵の名前
       rails_app: achieve
       facebook_id: <your facebook id> ←FACEBOOK_ID_PRODUCTION環境変数に設定する値
@@ -150,12 +152,14 @@ all:
 4. "Generate new token"ボタンを押す
 5. "admin:public_key"-"write:public_key"チェックボックスをクリックする
 6. "Generate token"ボタンを押す
-7. 画面に表示されるトークンを確認する
+7. トークンが画面に表示される
 
 #### Playbookの実行
 
 ```
 $ ansible-playbook -i inventories/production/hosts site.yml
 ```
+
+EC2インスタンスへの接続にPlaybookの前半ではec2-userを使用していますが、途中でec2-userを削除しているため、ec2-user削除後のタスクでPlaybookが失敗した場合はそのまま再実行することはできません。
 
 以上
