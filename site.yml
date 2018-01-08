@@ -19,9 +19,9 @@
           Name: "{{ ec2_name }}"
         state: restarted
 
-    - name: wait for 60 seconds
+    - name: wait for 120 seconds
       wait_for:
-        timeout: 60
+        timeout: 120
 
 - hosts: target_for_ec2-user
   become: true
@@ -75,7 +75,7 @@
         module: shell bundle exec rake secret chdir="{{rails_app_local_repo}}"
       register: secret_key_base
   roles:
-    - {role: rails-app, secret_key_base: secret_key_base.stdout}}", tasks: ['set-secret-key-base', 'create-dotenv-file']}
+    - {role: rails-app, secret_key_base: "{{secret_key_base.stdout}}", tasks: ['set-secret-key-base', 'create-dotenv-file']}
 
 - hosts: localhost
   connection: local
